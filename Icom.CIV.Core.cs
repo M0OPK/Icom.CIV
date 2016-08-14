@@ -25,7 +25,8 @@ namespace Icom.CIV
         private List<byte[]> cmdStackRX;
         private List<byte[]> cmdStackTX;
         private System.Diagnostics.Stopwatch serialTimer;
-        private Thread waitLoop;
+        private Thread waitLoopTX;
+        private Thread waitLoopRX;
         public ConfigData Config;
         private static Mutex commandLock;
         private byte preAmble;
@@ -151,8 +152,7 @@ namespace Icom.CIV
                 cmdStackRX.Add(cmdBuffer.ToArray());
                 cmdBuffer.Clear();
 
-                if (CommandWaiting != null)
-                    CommandWaiting(this, EventArgs.Empty);
+                RXTriggerEvent.Set();
                 return;
             }
 
@@ -390,10 +390,32 @@ namespace Icom.CIV
             return thisResult;
         }
 
+        private void RXThreadLoop()
+        {
+            bool runningRX = true;
+            do
+            {
+                try
+                {
+                    if (CommandWaiting != null && CommandQueued())
+                        CommandWaiting(this, EventArgs.Empty);
+
+                    RXTriggerEvent.WaitOne();
+                }
+                catch (ThreadAbortException /*ex*/)
+                {
+                    runningRX = false;
+                    Console.WriteLine("Closing RX thread");
+                    break;
+                }
+            } while (runningRX);
+            Console.WriteLine("Closed RX thread");
+        }
+
         // This loop runs inside a dedicated background thread.
         private void TXThreadLoop()
         {
-            bool running = true;
+            bool runningTX = true;
             do
             {
                 try
@@ -421,9 +443,12 @@ namespace Icom.CIV
                 }
                 catch(ThreadAbortException /*e*/)
                 {
-                    running = false;
+                    runningTX = false;
+                    Console.WriteLine("Closing TX thread");
+                    break;
                 }
-            } while (running);
+            } while (runningTX);
+            Console.WriteLine("Closed TX thread");
         }
     }
 }

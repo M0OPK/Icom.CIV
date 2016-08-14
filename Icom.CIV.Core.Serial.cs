@@ -93,9 +93,12 @@ namespace Icom.CIV
             if (sp.IsOpen)
             {
                 // Create new thread for TX polling
-                waitLoop = new Thread(new ThreadStart(TXThreadLoop));
-                waitLoop.IsBackground = true;
-                waitLoop.Start();
+                waitLoopTX = new Thread(new ThreadStart(TXThreadLoop));
+                waitLoopTX.IsBackground = true;
+                waitLoopTX.Start();
+                waitLoopRX = new Thread(new ThreadStart(RXThreadLoop));
+                waitLoopRX.IsBackground = true;
+                waitLoopRX.Start();
                 preAmble = 0;
             }
             return sp.IsOpen;
@@ -106,8 +109,12 @@ namespace Icom.CIV
             if (!sp.IsOpen)
                 return;
 
-            waitLoop.Abort();
-            waitLoop = null;
+            waitLoopTX.Abort();
+            waitLoopTX.Join();
+            waitLoopTX = null;
+            waitLoopRX.Abort();
+            waitLoopRX.Join();
+            waitLoopRX = null;
 
             sp.DataReceived -= SerialDataReceivedHandler;
 
