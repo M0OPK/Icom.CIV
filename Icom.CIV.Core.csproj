@@ -41,11 +41,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Icom.CIV.Commands.cs" />
+    <Compile Include="Icom.CIV.Core.Commands.cs" />
     <Compile Include="Icom.CIV.Core.Data.cs" />
     <Compile Include="Icom.CIV.Core.cs" />
     <Compile Include="Icom.CIV.Core.Helpers.cs" />
     <Compile Include="Icom.CIV.Core.Serial.cs" />
+    <Compile Include="Icom.CIV.Core.ThreadHandlers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
