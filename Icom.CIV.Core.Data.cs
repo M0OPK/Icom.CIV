@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.IO.Ports;
+using System.Linq;
 
 namespace Icom.CIV
 {
@@ -17,37 +18,69 @@ namespace Icom.CIV
 
         public enum CommandBytes
         {
+            [ExpectResponse(false)]
             COMMAND_FREQUENCY_SET = 0x00,
+            [ExpectResponse(false)]
             COMMAND_MODE_SET = 0x01,
+            [ExpectResponse(true)]
             COMMAND_FREQUENCY_BOUNDARY_READ = 0x02,
+            [ExpectResponse(true)]
             COMMAND_FREQUENCY_READ = 0x03,
+            [ExpectResponse(true)]
             COMMAND_MODE_READ = 0x04,
+            [ExpectResponse(true)]
             COMMAND_FREQUENCY_WRITE = 0x05,
+            [ExpectResponse(true)]
             COMMAND_MODE_WRITE = 0x06,
+            [ExpectResponse(true)]
             COMMAND_VFO_SET = 0x07,
+            [ExpectResponse(true)]
             COMMAND_MEMORY_CHANNEL_SET = 0x08,
+            [ExpectResponse(true)]
             COMMAND_MEMORY_CHANNEL_WRITE = 0x09,
+            [ExpectResponse(true)]
             COMMAND_MEMORY_TRANSFER_VFO = 0x0A,
+            [ExpectResponse(true)]
             COMMAND_MEMORY_CHANNEL_CLEAR = 0x0B,
+            [ExpectResponse(true)]
             COMMAND_OFFSET_FREQUENCY_READ = 0x0C,
+            [ExpectResponse(true)]
             COMMAND_OFFSET_FREQUENCY_WRITE = 0x0D,
+            [ExpectResponse(true)]
             COMMAND_SCAN = 0x0E,
+            [ExpectResponse(true)]
             COMMAND_SPLIT_DUPLEX = 0x0F,
+            [ExpectResponse(true)]
             COMMAND_TUNING_STEP = 0x10,
+            [ExpectResponse(true)]
             COMMAND_ATTENUATOR = 0x11,
+            [ExpectResponse(true)]
             COMMAND_ANTENNA_CONTROL = 0x12,
+            [ExpectResponse(true)]
             COMMAND_SPEECH_SYNTH = 0x13,
+            [ExpectResponse(true)]
             COMMAND_AFRF_GAIN_SET = 0x14,
+            [ExpectResponse(true)]
             COMMAND_AFRF_GAIN_READ = 0x15,
+            [ExpectResponse(true)]
             COMMAND_PANEL_CONTROLS_SET = 0x16,
+            [ExpectResponse(true)]
             COMMAND_CW_MESSAGE_SEND = 0x17,
+            [ExpectResponse(true)]
             COMMAND_POWER_ON_OFF = 0x18,
+            [ExpectResponse(true)]
             COMMAND_TRANCEIVER_ID_READ = 0x19,
+            [ExpectResponse(true)]
             COMMAND_MEMORY_IF_READ_SET_MISC_PANEL = 0x1A,
+            [ExpectResponse(true)]
             COMMAND_REPEATER_TONE_SET = 0x1B,
+            [ExpectResponse(true)]
             COMMAND_TXRX = 0x1C,
+            [ExpectResponse(true)]
             COMMAND_READ_SET_BAND_EDGES = 0x1E,
+            [ExpectResponse(true)]
             COMMAND_DSTAR_CALLSIGN_SET = 0x1F,
+            [ExpectResponse(true)]
             COMMAND_DSTAR_OTHER_SETTINGS = 0x20
         }
 
@@ -244,6 +277,37 @@ namespace Icom.CIV
                 ControllerAddress = (byte)Radio.PC_CONTROL;
                 ControllerPromiscuousLevel = PromiscuityLevel.PROMISCUOUS_NONE;
             }
+        }
+    }
+
+    public static class EnumExtensions
+    {
+        public static TAttribute GetAttribute<TAttribute>(this Enum value)
+            where TAttribute : Attribute
+        {
+            var type = value.GetType();
+            var name = Enum.GetName(type, value);
+            return type.GetField(name)
+                .GetCustomAttributes(false)
+                .OfType<TAttribute>()
+                .SingleOrDefault();
+        }
+    }
+
+    public class ExpectResponseAttribute : Attribute
+    {
+        internal ExpectResponseAttribute(bool expectResponse)
+        {
+            ExpectResponse = expectResponse;
+        }
+        public bool ExpectResponse { get; private set; }
+    }
+
+    public static class CommandBytesExtensions
+    {
+        public static bool GetExpectsResponse(this Core.CommandBytes b)
+        {
+            return b.GetAttribute<ExpectResponseAttribute>().ExpectResponse;
         }
     }
 }

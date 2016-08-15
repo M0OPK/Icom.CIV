@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using System.ComponentModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Icom.CIV
 {
@@ -14,7 +10,7 @@ namespace Icom.CIV
         private static string GetEnumDescription(Enum value)
         {
             FieldInfo fi = value.GetType().GetField(value.ToString());
-
+            System.ComponentModel.
             DescriptionAttribute[] attributes =
                 (DescriptionAttribute[])fi.GetCustomAttributes(
                 typeof(DescriptionAttribute),
