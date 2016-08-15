@@ -124,11 +124,11 @@ namespace Icom.CIV
         {
             // Validate command
             bool validMessage = true;
-            if (cmdBuffer.Count < 3)
+            if (cmdBuffer.Count < 5)
                 validMessage = false;
             else
             {
-                byte[] header = cmdBuffer.GetRange(0, 2).ToArray();
+                byte[] header = cmdBuffer.GetRange(2, 2).ToArray();
 
                 // Check for promiscuity level
                 if (header[0] != Config.ControllerAddress && header[0] != 0x00 && Config.ControllerPromiscuousLevel != PromiscuityLevel.PROMISCUOUS_ALLMESSAGES && Config.ControllerPromiscuousLevel != PromiscuityLevel.PROMISCUOUS_ANYCONTROLLER)
@@ -154,6 +154,9 @@ namespace Icom.CIV
                 return;
             }
 
+            // For original raw mode, strip pre-amble and command end
+            cmdBuffer.RemoveRange(0, 2);
+            cmdBuffer.Remove(cmdBuffer.Last());
             if (!waitingForRawResult)
             {
                 // Remove header, unless there is a process waiting for raw data
@@ -168,6 +171,7 @@ namespace Icom.CIV
                     while (tempBuffer.Count > lastCommand.Length)
                         tempBuffer.Remove(tempBuffer.First());
 
+                // This needs to be moved to a better solution
                 if (lastCommand != null && BitConverter.ToString(tempBuffer.ToArray()).Equals(BitConverter.ToString(lastCommand)))
                 {
                     // If this was an echo of our sent command, then clear buffer and keep looking
@@ -252,12 +256,19 @@ namespace Icom.CIV
         }
 
         // Read a single received command, remove it from the stack
-        public byte[] ReadCommand()
+        public byte[] ReadCommand(bool raw = false)
         {
             // Read one command from stack
-            byte[] thisCommand = cmdStackRX.First();
+            List<byte> thisCommand = cmdStackRX.First().ToList();
             cmdStackRX.Remove(cmdStackRX.First());
-            return thisCommand;
+
+            if (!raw)
+            {
+                thisCommand.RemoveRange(0, 2);
+                thisCommand.Remove(thisCommand.Last());
+            }
+            return thisCommand.ToArray();
+
         }
 
         // Queue a command to be sent to radio

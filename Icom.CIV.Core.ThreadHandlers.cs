@@ -13,7 +13,9 @@ namespace Icom.CIV
                 try
                 {
                     if (CommandWaiting != null && CommandQueued())
+                    {
                         CommandWaiting(this, EventArgs.Empty);
+                    }
 
                     RXTriggerEvent.WaitOne();
                 }

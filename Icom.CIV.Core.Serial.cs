@@ -21,6 +21,7 @@ namespace Icom.CIV
                 if (byteIn == (byte)SpecialByte.SPECIAL_COMMANDEND)
                 {
                     // Handle end of command, queue command
+                    AddByteToBuffer(byteIn);
                     QueueCommand();
                     preAmble = 0;
                 }
@@ -31,13 +32,14 @@ namespace Icom.CIV
                 }
                 else if (preAmble == 2)
                 {
-                    // Add to buffer if preamblex2 already received (ignore extra premable)
+                    // Add to buffer if preamblex2 already received (ignore extra preamable)
                     if (byteIn != (byte)SpecialByte.SPECIAL_PREAMBLE)
                         AddByteToBuffer(byteIn);
                 }
                 else if (byteIn == (byte)SpecialByte.SPECIAL_PREAMBLE)
                 {
                     // Pre-amble read
+                    AddByteToBuffer(byteIn);
                     preAmble++;
                 }
             }
@@ -52,6 +54,9 @@ namespace Icom.CIV
         // Open serial port, and initialize for reception/sending of commands
         public bool OpenSerialPort(string portName, int baudRate = -1)
         {
+            if (sp != null)
+                CloseSerialPort();
+
             IntToBCD5(433375000, 4);
             // Check CIV config is valid
             if (Config.ControllerAddress == 0x00 || Config.RadioAddress == 0x00 || Config.RadioID == Radio.NULL_RADIO)
@@ -102,8 +107,15 @@ namespace Icom.CIV
 
         public void CloseSerialPort()
         {
-            if (!sp.IsOpen)
+            if (sp == null)
                 return;
+
+            if (!sp.IsOpen)
+            {
+                sp.Dispose();
+                sp = null;
+                return;
+            }
 
             waitLoopTX.Abort();
             waitLoopTX.Join();
@@ -115,6 +127,7 @@ namespace Icom.CIV
             sp.DataReceived -= SerialDataReceivedHandler;
 
             sp.Close();
+            sp.Dispose();
             sp = null;
         }
 
